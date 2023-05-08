@@ -3,13 +3,11 @@
 # @Author: pixelock
 # @Time: 2023/4/26 0:09
 
-import os
-from typing import Dict, Union, Optional
-from torch.nn import Module
+from typing import Dict, Optional
 from transformers import AutoModel
 from accelerate import dispatch_model
 
-from .base import LLM
+from models.base import LLM
 
 
 class ChatGLM(LLM):
