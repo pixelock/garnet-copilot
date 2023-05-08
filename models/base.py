@@ -4,9 +4,10 @@
 # @Time: 2023/4/25 23:58
 
 import torch
+from abc import ABC
 
 
-class LLM(object):
+class LLM(ABC):
     def __init__(self, model_id_or_dir: str, **kwargs):
         self.model_id_or_dir = model_id_or_dir
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
