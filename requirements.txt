@@ -1,2 +1,7 @@
-transformers
 accelerate
+cpm_kernels
+fire
+langchain
+nvidia-ml-py
+sentencepiece
+transformers

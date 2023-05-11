@@ -3,16 +3,26 @@
 # @Author: pixelock
 # @Time: 2023/4/25 23:58
 
-import torch
-from abc import ABC
+from abc import ABC, abstractmethod
+from pydantic import BaseModel
 
 
-class LLM(ABC):
-    def __init__(self, model_id_or_dir: str, **kwargs):
-        self.model_id_or_dir = model_id_or_dir
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+class BaseLLM(BaseModel, ABC):
+    @classmethod
+    @abstractmethod
+    def load_model(cls, *args, **kwargs):
+        """Load and initial LLM."""
 
-        self.model = self.init_model(**kwargs)
+    @classmethod
+    @abstractmethod
+    def load_tokenizer(cls, *args, **kwargs):
+        """Load and initial tokenizer."""
 
-    def init_model(self, **kwargs):
-        raise NotImplementedError
+    @abstractmethod
+    def _generate(self, *args, **kwargs):
+        """Run the LLM on the given prompts."""
+
+    @property
+    @abstractmethod
+    def llm_type(self) -> str:
+        """Return type of llm."""
