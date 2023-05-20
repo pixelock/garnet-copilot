@@ -2,3 +2,5 @@
 # @File: __init__.py
 # @Author: pixelock
 # @Time: 2023/5/8 22:33
+
+from .remote import RemoteLLM

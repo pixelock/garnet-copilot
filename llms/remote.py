@@ -1,10 +1,9 @@
 # coding: utf-8
+# @File: remote.py
+# @Author: pixelock
+# @Time: 2023/5/20 8:56
 
-"""
-@author: pixelock
-@file: RestfulLLM.py
-@time: 2023/5/11 22:43
-"""
+__all__ = ['RemoteLLM']
 
 import requests
 from typing import List, Dict, Optional
@@ -12,7 +11,7 @@ from langchain.llms.base import LLM
 from langchain.callbacks.manager import CallbackManagerForLLMRun
 
 
-class RestfulLLM(LLM):
+class RemoteLLM(LLM):
     url: str
     prompt_key: str
     return_key: str
