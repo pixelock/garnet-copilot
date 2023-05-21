@@ -7,11 +7,11 @@ from pydantic import root_validator
 from typing import Dict, Optional, Any, List
 from torch.nn import Module
 from transformers import AutoModel, AutoTokenizer
-from accelerate import dispatch_model
+from langchain.callbacks.manager import CallbackManagerForLLMRun
 
 from models.base import BaseLLM
 from configs import DEVICE, NUM_GPU
-from utils.cuda import check_gpu_status, fetch_available_gpus
+from utils.cuda import torch_gc, check_gpu_status, fetch_available_gpus
 
 CHATGLM_GPU_MEMORY_MAP = {
     'float16': 15000,
@@ -86,23 +86,27 @@ def auto_configure_device_map(num_gpus: int = None, device_ids: List[int] = None
 class ChatGLM(BaseLLM):
     model_name_or_path: str
     quantization: Optional[str] = 'int8'
+    max_tokens: int = 1e4
+    temperature: float = 0.01
+    top_p: float = 0.7
     device: str = DEVICE
     multi_gpu: bool = False
     tokenizer_kwargs: Dict = dict()
     model_kwargs: Dict = dict()
 
-    model: Any = None
-    tokenizer: Any = None
+    model: object = None
+    tokenizer: object = None
 
     @classmethod
     def load_tokenizer(cls, model_name_or_path, **kwargs):
-        return AutoTokenizer.from_pretrained(model_name_or_path, trust_remote_code=True, **kwargs)
+        tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, trust_remote_code=True, **kwargs)
+        return tokenizer
 
     @classmethod
     def load_model(cls, model_name_or_path, device='cuda', multi_gpu=False, quantization='int8', **kwargs):
         if device == 'cpu':
             # deploy on CPU
-            model = AutoModel.from_pretrained(model_name_or_path, trust_remote_code=True).float()
+            model = AutoModel.from_pretrained(model_name_or_path, trust_remote_code=True, **kwargs).float()
         elif multi_gpu and NUM_GPU > 1:
             # deploy on multi GPUs
             model = load_model_on_multi_gpus(
@@ -113,12 +117,12 @@ class ChatGLM(BaseLLM):
             )
         else:
             # deploy on single GPU
-            model = AutoModel.from_pretrained(model_name_or_path, trust_remote_code=True).half().to(device)
+            model = AutoModel.from_pretrained(model_name_or_path, trust_remote_code=True, **kwargs).half().to(device)
 
         model.eval()
         return model
 
-    @root_validator
+    @root_validator()
     def validate_environment(cls, values: Dict) -> Dict:
         values['tokenizer'] = cls.load_tokenizer(values['model_name_or_path'], **values['tokenizer_kwargs'])
         values['model'] = cls.load_model(
@@ -130,29 +134,39 @@ class ChatGLM(BaseLLM):
         )
         return values
 
-    @property
-    def llm_type(self) -> str:
-        return 'ChatGLM'
-
-    def _generate(self,
-                  prompt,
-                  history=None,
-                  temperature=0.95,
-                  top_p=0.7,
-                  num_beams=1,
-                  max_length=2048,):
-        response, history = self.model.chat(
+    def _call(
+        self,
+        prompt: str,
+        temperature: Optional[float] = None,
+        top_p: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        stop: Optional[List[str]] = None,
+        run_manager: Optional[CallbackManagerForLLMRun] = None,
+    ) -> str:
+        response, _ = self.model.chat(
             self.tokenizer,
             prompt,
-            history=history,
-            max_length=max_length,
-            num_beams=num_beams,
-            top_p=top_p,
-            temperature=temperature
+            max_length=max_tokens or self.max_tokens,
+            temperature=temperature or self.temperature,
+            top_p=top_p or self.top_p,
         )
-        return response, history
+        torch_gc()
+        return response
+
+    @property
+    def _llm_type(self) -> str:
+        return 'ChatGLM'
+
+    @property
+    def trainable(self):
+        return True
 
 
 if __name__ == '__main__':
     model = ChatGLM(model_name_or_path='THUDM/chatglm-6b', quantization='int4')
     print('Loaded ChatGLM')
+
+    query = '你是谁'
+    print(f'Human: {query}')
+    model_resp = model(query)
+    print(f'AI: {model_resp}')
