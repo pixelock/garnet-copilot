@@ -154,5 +154,5 @@ class ChatGLM(BaseLLM):
 
 
 if __name__ == '__main__':
-    model = ChatGLM(model_name_or_path='THUDM/chatglm-6b-int4', quantization='int4')
+    model = ChatGLM(model_name_or_path='THUDM/chatglm-6b', quantization='int4')
     print('Loaded ChatGLM')
