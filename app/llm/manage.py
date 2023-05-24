@@ -8,7 +8,9 @@
 
 import os
 from flask import Blueprint, request
+
 from models.chatglm import ChatGLM
+from .request_schema import ChatGLMRequest
 
 bp_llm = Blueprint('llm', __name__)
 
