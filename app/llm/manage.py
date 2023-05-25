@@ -7,7 +7,7 @@
 """
 
 import os
-from flask import Blueprint, request
+from flask import Blueprint, request, config
 
 from models.chatglm import ChatGLM
 from .request_schema import ChatGLMRequest

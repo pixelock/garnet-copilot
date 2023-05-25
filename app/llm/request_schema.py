@@ -8,7 +8,7 @@
 
 from typing import Optional, Union, List, Tuple
 
-from app.request_schema import BaseRequest
+from app.schemas.req import BaseRequest
 
 
 class LLMRequest(BaseRequest):

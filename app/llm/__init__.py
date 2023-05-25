@@ -6,9 +6,13 @@
 @time: 2023/5/21 22:12
 """
 
-from flask import Flask
+from flask import Flask, current_app
 
 from .manage import bp_llm
+
+
+def init_llm(app: Flask):
+    llm_type = app.config
 
 
 def register_app(app: Flask):
